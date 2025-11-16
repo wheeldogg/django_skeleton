@@ -1,0 +1,62 @@
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Item</h3>
+    <form hx-post="{% url 'demo:item-create' %}"
+          hx-target="#items-container"
+          hx-swap="afterbegin"
+          hx-on::after-request="this.reset()">
+        {% csrf_token %}
+        <div class="space-y-4">
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    Title
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    Description
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    Priority
+                </label>
+                {{ form.priority }}
+                {% if form.priority.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center">
+                {{ form.is_completed }}
+                <label for="{{ form.is_completed.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    Mark as completed
+                </label>
+                {% if form.is_completed.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_completed.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button type="button"
+                        onclick="document.getElementById('item-form-container').innerHTML = ''"
+                        class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    Create Item
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,7 @@
+{% for item in items %}
+    {% include 'demo/partials/item_row.html' %}
+{% empty %}
+    <li class="px-6 py-12 text-center text-gray-500">
+        No items found. Create your first item!
+    </li>
+{% endfor %}

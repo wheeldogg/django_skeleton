@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Items - Django Skeleton{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <h1 class="text-3xl font-bold text-gray-900">Items</h1>
+        <div class="mt-3 sm:mt-0 sm:ml-4">
+            <button hx-get="{% url 'demo:item-create' %}"
+                    hx-target="#item-form-container"
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                Add New Item
+            </button>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-white shadow rounded-lg p-4">
+        <input type="text"
+               name="search"
+               placeholder="Search items..."
+               hx-get="{% url 'demo:item-search' %}"
+               hx-trigger="keyup changed delay:500ms"
+               hx-target="#items-container"
+               hx-swap="innerHTML"
+               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+    </div>
+
+    <!-- Form Container -->
+    <div id="item-form-container"></div>
+
+    <!-- Items List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul id="items-container" class="divide-y divide-gray-200">
+            {% include 'demo/partials/item_rows.html' %}
+        </ul>
+
+        <!-- Load More -->
+        {% if page_obj.has_next %}
+        <div class="px-6 py-4 border-t border-gray-200">
+            <button hx-get="?page={{ page_obj.next_page_number }}"
+                    hx-target="#items-container"
+                    hx-swap="beforeend"
+                    hx-indicator="#loading-indicator"
+                    class="w-full text-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Load More
+                <span id="loading-indicator" class="htmx-indicator ml-2">
+                    <svg class="animate-spin h-4 w-4 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .htmx-indicator {
+        display: none;
+    }
+    .htmx-request .htmx-indicator {
+        display: inline;
+    }
+    .htmx-request.htmx-indicator {
+        display: inline;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Demo - Django Skeleton{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Demo Application</h1>
+        <p class="mt-2 text-gray-600">
+            Explore the features of this Django skeleton with HTMX and Alpine.js
+        </p>
+    </div>
+
+    <!-- Tech Stack Display -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                Technology Stack
+            </h3>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                {% for tech, description in tech_stack.items %}
+                <div class="{% if not forloop.first %}border-t border-gray-200{% endif %} px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">
+                        {{ tech }}
+                    </dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        {{ description }}
+                    </dd>
+                </div>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Feature Demos -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- HTMX Demo -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">HTMX Features</h3>
+            <ul class="space-y-3">
+                <li>
+                    <a href="{% url 'demo:item-list' %}" class="text-indigo-600 hover:text-indigo-500">
+                        Infinite Scroll with Items List
+                    </a>
+                </li>
+                <li>
+                    <button hx-get="{% url 'demo:item-create' %}"
+                            hx-target="#modal-container"
+                            hx-swap="innerHTML"
+                            class="text-indigo-600 hover:text-indigo-500">
+                        Dynamic Form Loading
+                    </button>
+                </li>
+                <li>
+                    <button hx-get="{% url 'demo:api-example' %}"
+                            hx-target="#htmx-response"
+                            hx-swap="innerHTML"
+                            class="text-indigo-600 hover:text-indigo-500">
+                        AJAX API Call
+                    </button>
+                </li>
+            </ul>
+            <div id="htmx-response" class="mt-4"></div>
+        </div>
+
+        <!-- Alpine.js Demo -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Alpine.js Features</h3>
+            <ul class="space-y-3">
+                <li>
+                    <a href="{% url 'demo:alpine-examples' %}" class="text-indigo-600 hover:text-indigo-500">
+                        Interactive Components Gallery
+                    </a>
+                </li>
+                <li>
+                    <div x-data="{ open: false }">
+                        <button @click="open = !open" class="text-indigo-600 hover:text-indigo-500">
+                            Toggle Dropdown
+                        </button>
+                        <div x-show="open" x-transition class="mt-2 p-4 bg-gray-50 rounded">
+                            This is a dropdown content!
+                        </div>
+                    </div>
+                </li>
+                <li>
+                    <div x-data="{ tab: 'tab1' }">
+                        <div class="flex space-x-4">
+                            <button @click="tab = 'tab1'"
+                                    :class="tab === 'tab1' ? 'text-indigo-600' : 'text-gray-500'"
+                                    class="hover:text-indigo-500">
+                                Tab 1
+                            </button>
+                            <button @click="tab = 'tab2'"
+                                    :class="tab === 'tab2' ? 'text-indigo-600' : 'text-gray-500'"
+                                    class="hover:text-indigo-500">
+                                Tab 2
+                            </button>
+                        </div>
+                        <div class="mt-2">
+                            <div x-show="tab === 'tab1'" x-transition>Content 1</div>
+                            <div x-show="tab === 'tab2'" x-transition>Content 2</div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'demo:item-list' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                View Items
+            </a>
+            <a href="{% url 'admin:index' %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Admin Panel
+            </a>
+            <button hx-get="{% url 'demo:item-create' %}"
+                    hx-target="#modal-container"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Create Item (HTMX)
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Container -->
+<div id="modal-container"></div>
+{% endblock %}
