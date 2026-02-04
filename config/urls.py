@@ -17,6 +17,7 @@ urlpatterns = [
 
     # App URLs
     path('demo/', include('apps.demo.urls')),
+    path('analysis/', include('apps.llm_analysis.urls')),
 
     # API URLs
     path('api/', include('config.api_urls')),

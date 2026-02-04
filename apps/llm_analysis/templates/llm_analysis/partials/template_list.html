@@ -1,0 +1,16 @@
+<!-- Template List Partial -->
+<div class="space-y-2">
+    {% for template in templates %}
+    <button type="button"
+            @click="selectedTemplate = '{{ template.id }}'; loadTemplateForm()"
+            class="w-full text-left px-3 py-2 rounded-md border transition-colors"
+            :class="selectedTemplate === '{{ template.id }}' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:bg-gray-50'">
+        <p class="text-sm font-medium text-gray-900">{{ template.name }}</p>
+        {% if template.description %}
+        <p class="text-xs text-gray-500 truncate">{{ template.description }}</p>
+        {% endif %}
+    </button>
+    {% empty %}
+    <p class="text-sm text-gray-500 italic">No templates available in this category.</p>
+    {% endfor %}
+</div>

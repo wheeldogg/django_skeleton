@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Data Analysis - LLM Platform{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="analysisApp()">
+    <!-- Demo Mode Banner -->
+    {% if demo_mode %}
+    <div class="rounded-md bg-amber-50 border border-amber-200 p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-amber-800">Demo Mode Active</h3>
+                <p class="mt-1 text-sm text-amber-700">
+                    {{ demo_message }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Data Analysis
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if prompt_mode == 'constrained' %}
+                    Select a template to analyze your data
+                {% elif prompt_mode == 'guided' %}
+                    Describe your analysis needs
+                {% else %}
+                    Open analysis mode (admin only)
+                {% endif %}
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium
+                {% if prompt_mode == 'constrained' %}bg-blue-100 text-blue-800
+                {% elif prompt_mode == 'guided' %}bg-green-100 text-green-800
+                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                Mode: {{ settings.get_prompt_mode_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Input Panel -->
+        <div class="lg:col-span-1">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">
+                    {% if prompt_mode == 'constrained' %}
+                        Analysis Templates
+                    {% else %}
+                        Your Query
+                    {% endif %}
+                </h2>
+
+                {% if prompt_mode == 'constrained' %}
+                    <!-- Template Selection -->
+                    <div class="space-y-4">
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                            <select id="category"
+                                    x-model="selectedCategory"
+                                    @change="loadTemplates()"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">Select a category...</option>
+                                {% for category, templates in template_categories.items %}
+                                <option value="{{ category }}">{{ category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div x-show="selectedCategory">
+                            <label for="template" class="block text-sm font-medium text-gray-700">Template</label>
+                            <select id="template"
+                                    x-model="selectedTemplate"
+                                    @change="loadTemplateForm()"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                <option value="">Select a template...</option>
+                                {% for template in templates %}
+                                <option value="{{ template.id }}"
+                                        x-show="!selectedCategory || '{{ template.category }}' === selectedCategory">
+                                    {{ template.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Template Form -->
+                        <div id="template-form-container"
+                             hx-trigger="templateChanged from:body"
+                             hx-swap="innerHTML">
+                            <template x-if="selectedTemplate">
+                                <div hx-get=""
+                                     :hx-get="`{% url 'llm_analysis:template-form' 0 %}`.replace('0', selectedTemplate)"
+                                     hx-trigger="load"
+                                     hx-swap="innerHTML">
+                                    <div class="animate-pulse">
+                                        <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                        <div class="h-10 bg-gray-200 rounded mb-4"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Free-text Input -->
+                    <form hx-post="{% url 'llm_analysis:analyze' %}"
+                          hx-target="#results-container"
+                          hx-indicator="#loading"
+                          @htmx:before-request="isLoading = true"
+                          @htmx:after-request="isLoading = false">
+                        {% csrf_token %}
+
+                        <div class="space-y-4">
+                            <div>
+                                <label for="prompt" class="block text-sm font-medium text-gray-700">
+                                    Analysis Query
+                                </label>
+                                <textarea
+                                    id="prompt"
+                                    name="prompt"
+                                    rows="6"
+                                    x-model="prompt"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                    placeholder="Describe what you want to analyze. Be specific about the data, metrics, and time periods of interest.
+
+Example: Analyze the sales data for Q4 2024, focusing on regional performance and identifying any anomalies or trends."></textarea>
+                            </div>
+
+                            <!-- Suggestions (Guided Mode) -->
+                            {% if prompt_mode == 'guided' %}
+                            <div class="bg-gray-50 rounded-md p-3">
+                                <p class="text-xs font-medium text-gray-500 mb-2">Suggestions:</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button"
+                                            @click="prompt = 'Analyze trends in '"
+                                            class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Trends
+                                    </button>
+                                    <button type="button"
+                                            @click="prompt = 'Compare metrics between '"
+                                            class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Compare
+                                    </button>
+                                    <button type="button"
+                                            @click="prompt = 'Find anomalies in '"
+                                            class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Anomalies
+                                    </button>
+                                    <button type="button"
+                                            @click="prompt = 'Summarize the key findings from '"
+                                            class="inline-flex items-center rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Summarize
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if prompt_mode == 'open' and user.is_superuser and settings.bypass_guardrails %}
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                <div class="flex items-center">
+                                    <input type="checkbox"
+                                           id="bypass"
+                                           name="bypass"
+                                           value="true"
+                                           class="h-4 w-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
+                                    <label for="bypass" class="ml-2 text-sm text-yellow-700">
+                                        Bypass guardrails (dev only)
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div>
+                                <button type="submit"
+                                        :disabled="isLoading || !prompt.trim()"
+                                        class="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span x-show="!isLoading">Analyze</span>
+                                    <span x-show="isLoading" class="flex items-center">
+                                        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Analyzing...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white shadow rounded-lg p-6 mt-4">
+                <h3 class="text-sm font-medium text-gray-900 mb-3">Quick Actions</h3>
+                <div class="space-y-2">
+                    <a href="{% url 'llm_analysis:history' %}"
+                       class="block text-sm text-indigo-600 hover:text-indigo-500">
+                        View analysis history
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'llm_analysis:audit-logs' %}"
+                       class="block text-sm text-indigo-600 hover:text-indigo-500">
+                        View audit logs
+                    </a>
+                    <a href="{% url 'admin:llm_analysis_systemsettings_change' 1 %}"
+                       class="block text-sm text-indigo-600 hover:text-indigo-500">
+                        System settings
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="lg:col-span-2">
+            <div class="bg-white shadow rounded-lg p-6 min-h-[400px]">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Analysis Results</h2>
+
+                <!-- Loading Indicator -->
+                <div id="loading" class="htmx-indicator flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-2 text-sm text-gray-500">Analyzing your data...</p>
+                    </div>
+                </div>
+
+                <!-- Results Container -->
+                <div id="results-container">
+                    <!-- Initial empty state -->
+                    <div class="text-center py-12 text-gray-400">
+                        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="mt-2">Enter a query to see analysis results</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function analysisApp() {
+    return {
+        prompt: '',
+        selectedCategory: '',
+        selectedTemplate: '',
+        isLoading: false,
+
+        loadTemplates() {
+            this.selectedTemplate = '';
+        },
+
+        loadTemplateForm() {
+            if (this.selectedTemplate) {
+                htmx.trigger(document.body, 'templateChanged');
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

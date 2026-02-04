@@ -1,0 +1,60 @@
+<!-- Template Form Partial (loaded dynamically) -->
+<form hx-post="{% url 'llm_analysis:analyze' %}"
+      hx-target="#results-container"
+      hx-indicator="#loading"
+      class="space-y-4">
+    {% csrf_token %}
+
+    <!-- Template Info -->
+    <div class="bg-gray-50 rounded-md p-3">
+        <h4 class="text-sm font-medium text-gray-900">{{ template.name }}</h4>
+        {% if template.description %}
+        <p class="mt-1 text-xs text-gray-500">{{ template.description }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Hidden template ID -->
+    <input type="hidden" name="template_id" value="{{ template.id }}">
+
+    <!-- Dynamic Variable Fields -->
+    {% for field in form %}
+        {% if field.name != 'template_id' %}
+        <div>
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                {{ field.label }}
+                {% if field.field.required %}
+                <span class="text-red-500">*</span>
+                {% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ field.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+
+    <!-- Preview -->
+    <div x-data="{ showPreview: false }">
+        <button type="button"
+                @click="showPreview = !showPreview"
+                class="text-sm text-indigo-600 hover:text-indigo-500">
+            <span x-show="!showPreview">Show template preview</span>
+            <span x-show="showPreview">Hide template preview</span>
+        </button>
+        <div x-show="showPreview"
+             x-transition
+             class="mt-2 p-3 bg-gray-100 rounded-md text-sm text-gray-600 font-mono">
+            {{ template.template }}
+        </div>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Analyze
+    </button>
+</form>

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Log #{{ log.id }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol role="list" class="flex items-center space-x-2 text-sm">
+                    <li>
+                        <a href="{% url 'llm_analysis:audit-logs' %}" class="text-gray-500 hover:text-gray-700">
+                            Audit Logs
+                        </a>
+                    </li>
+                    <li>
+                        <svg class="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                    </li>
+                    <li class="text-gray-700">#{{ log.id }}</li>
+                </ol>
+            </nav>
+            <h1 class="mt-2 text-2xl font-bold leading-7 text-gray-900">
+                Audit Log #{{ log.id }}
+            </h1>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            {% if log.was_filtered %}
+            <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-red-100 text-red-800">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                Blocked
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-800">
+                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Allowed
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Request Information -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Request Information</h2>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Timestamp</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ log.created_at }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">User</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {% if log.user %}
+                            {{ log.user.username }} ({{ log.user.email }})
+                        {% else %}
+                            Anonymous
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">IP Address</dt>
+                    <dd class="mt-1 text-sm text-gray-900 font-mono">{{ log.ip_address|default:"-" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Mode</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ log.get_mode_display }}</dd>
+                </div>
+                {% if log.template %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Template</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ log.template.name }}</dd>
+                </div>
+                {% endif %}
+                {% if log.bypass_used %}
+                <div class="bg-yellow-50 p-3 rounded-md">
+                    <dt class="text-sm font-medium text-yellow-800">Guardrails Bypassed</dt>
+                    <dd class="mt-1 text-sm text-yellow-700">This request bypassed guardrails (dev mode)</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+
+        <!-- Response Information -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Response Information</h2>
+            <dl class="space-y-4">
+                {% if log.response_time_ms %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Response Time</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ log.response_time_ms }}ms</dd>
+                </div>
+                {% endif %}
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Token Usage</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        Input: {{ log.input_tokens|default:0 }} / Output: {{ log.output_tokens|default:0 }}
+                    </dd>
+                </div>
+                {% if log.was_filtered %}
+                <div class="bg-red-50 p-3 rounded-md">
+                    <dt class="text-sm font-medium text-red-800">Filter Reason</dt>
+                    <dd class="mt-1 text-sm text-red-700">{{ log.filter_reason }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Prompt</h2>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <pre class="text-sm text-gray-900 whitespace-pre-wrap font-mono">{{ log.prompt }}</pre>
+        </div>
+        {% if log.rendered_prompt and log.rendered_prompt != log.prompt %}
+        <h3 class="text-md font-medium text-gray-900 mt-4 mb-2">Rendered Prompt</h3>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <pre class="text-sm text-gray-900 whitespace-pre-wrap font-mono">{{ log.rendered_prompt }}</pre>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- LLM Response -->
+    {% if log.llm_response %}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">LLM Response</h2>
+        <div class="bg-gray-50 p-4 rounded-md max-h-96 overflow-auto">
+            <pre class="text-sm text-gray-900 whitespace-pre-wrap font-mono">{{ log.llm_response }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Guardrail Response -->
+    {% if log.guardrail_response %}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Guardrail Trace</h2>
+        <div class="bg-gray-50 p-4 rounded-md max-h-96 overflow-auto">
+            <pre class="text-sm text-gray-900 whitespace-pre-wrap font-mono">{{ log.guardrail_response|pprint }}</pre>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- User Agent -->
+    {% if log.user_agent %}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">User Agent</h2>
+        <div class="bg-gray-50 p-4 rounded-md">
+            <pre class="text-xs text-gray-600 whitespace-pre-wrap font-mono">{{ log.user_agent }}</pre>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

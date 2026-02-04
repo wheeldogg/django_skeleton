@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis History{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="min-w-0 flex-1">
+            <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                Analysis History
+            </h1>
+            <p class="mt-1 text-sm text-gray-500">
+                Your recent analysis queries and results
+            </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0">
+            <a href="{% url 'llm_analysis:home' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                New Analysis
+            </a>
+        </div>
+    </div>
+
+    <!-- History List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul role="list" class="divide-y divide-gray-200">
+            {% for log in logs %}
+            <li>
+                <div class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">
+                                {{ log.prompt_preview }}
+                            </p>
+                            <div class="mt-1 flex items-center text-xs text-gray-500">
+                                <span>{{ log.created_at|date:"M d, Y H:i" }}</span>
+                                <span class="mx-2">·</span>
+                                <span>{{ log.get_mode_display }}</span>
+                                {% if log.template %}
+                                <span class="mx-2">·</span>
+                                <span>Template: {{ log.template.name }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="ml-4 flex items-center space-x-2">
+                            {% if log.was_filtered %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Blocked
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Completed
+                            </span>
+                            {% endif %}
+                            {% if log.response_time_ms %}
+                            <span class="text-xs text-gray-500">
+                                {{ log.response_time_ms }}ms
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if log.llm_response and not log.was_filtered %}
+                    <div class="mt-2" x-data="{ expanded: false }">
+                        <button @click="expanded = !expanded"
+                                class="text-xs text-indigo-600 hover:text-indigo-500">
+                            <span x-show="!expanded">Show response</span>
+                            <span x-show="expanded">Hide response</span>
+                        </button>
+                        <div x-show="expanded"
+                             x-transition
+                             class="mt-2 p-3 bg-gray-50 rounded-md text-xs text-gray-600 font-mono overflow-auto max-h-48">
+                            {{ log.llm_response|truncatechars:1000 }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </li>
+            {% empty %}
+            <li class="px-4 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p class="mt-2 text-sm text-gray-500">No analysis history yet</p>
+                <a href="{% url 'llm_analysis:home' %}"
+                   class="mt-2 inline-block text-sm text-indigo-600 hover:text-indigo-500">
+                    Start your first analysis
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

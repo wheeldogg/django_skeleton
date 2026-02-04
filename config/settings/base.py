@@ -37,6 +37,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'apps.demo',
+    'apps.llm_analysis',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -253,3 +254,13 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     CSRF_COOKIE_SECURE = True
+
+# Amazon Bedrock Configuration
+AWS_DEFAULT_REGION = config('AWS_DEFAULT_REGION', default='us-east-1')
+BEDROCK_MODEL_ID = config(
+    'BEDROCK_MODEL_ID',
+    default='anthropic.claude-3-sonnet-20240229-v1:0'
+)
+BEDROCK_GUARDRAIL_ID = config('BEDROCK_GUARDRAIL_ID', default='')
+BEDROCK_GUARDRAIL_VERSION = config('BEDROCK_GUARDRAIL_VERSION', default='DRAFT')
+BEDROCK_MAX_TOKENS = config('BEDROCK_MAX_TOKENS', default=4096, cast=int)

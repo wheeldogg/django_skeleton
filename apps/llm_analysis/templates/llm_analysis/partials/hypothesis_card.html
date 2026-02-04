@@ -1,0 +1,88 @@
+<!-- Hypothesis Card Component -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+    <div class="p-5">
+        <!-- Header -->
+        <div class="flex items-start justify-between">
+            <h4 class="text-base font-semibold text-gray-900 flex-1">
+                {{ hypothesis.title }}
+            </h4>
+            <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                {% if hypothesis.confidence == 'high' %}
+                    bg-green-100 text-green-800
+                {% elif hypothesis.confidence == 'medium' %}
+                    bg-yellow-100 text-yellow-800
+                {% else %}
+                    bg-red-100 text-red-800
+                {% endif %}">
+                {% if hypothesis.confidence == 'high' %}
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                {% elif hypothesis.confidence == 'medium' %}
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                {% else %}
+                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                    </svg>
+                {% endif %}
+                {{ hypothesis.confidence|title }} Confidence
+            </span>
+        </div>
+
+        <!-- Summary -->
+        <p class="mt-3 text-sm text-gray-600">
+            {{ hypothesis.summary }}
+        </p>
+
+        <!-- Evidence -->
+        {% if hypothesis.evidence %}
+        <div class="mt-4" x-data="{ showEvidence: false }">
+            <button @click="showEvidence = !showEvidence"
+                    class="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                <svg class="w-4 h-4 mr-1 transition-transform"
+                     :class="showEvidence ? 'rotate-90' : ''"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                Evidence ({{ hypothesis.evidence|length }})
+            </button>
+            <ul x-show="showEvidence"
+                x-transition
+                class="mt-2 space-y-1 pl-5">
+                {% for item in hypothesis.evidence %}
+                <li class="text-sm text-gray-600 flex items-start">
+                    <svg class="w-4 h-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {{ item }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Visualization Hint -->
+        {% if hypothesis.visualization_type and hypothesis.visualization_type != 'none' %}
+        <div class="mt-4 flex items-center text-xs text-gray-500">
+            {% if hypothesis.visualization_type == 'chart' %}
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Best visualized as a chart
+            {% elif hypothesis.visualization_type == 'table' %}
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Best visualized as a table
+            {% else %}
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Text format recommended
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
